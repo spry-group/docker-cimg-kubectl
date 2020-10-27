@@ -1,2 +1,2 @@
-# docker-kubectl
-A publicly built kubectl image for CI/CD servers
+# docker-cimg-kubectl
+CircleCI Image for Kubernetes Integrations

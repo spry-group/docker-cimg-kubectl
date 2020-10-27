@@ -1,0 +1,41 @@
+version: 2.1
+
+executors:
+  base:
+    docker:
+      - image: cimg/base:2020.10
+
+jobs:
+  docker_build:
+    parameters:
+      kubectl_version:
+        type: string
+      cimg_version:
+        type: string
+    executor: base
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          command: |
+              docker build \
+                -t sprygroup/cimg-kubectl:<< parameters.cimg_version >>-<< parameters.kubectl_version >> \
+                --build-arg VCS_REF=${CIRCLE_SHA1} \
+                --build-arg BUILD_DATE=`date --rfc-3339=seconds | sed 's/ /T/'` \
+                --build-arg CIMG_VERSION=<< parameters.cimg_version >> \
+                --build-arg KUBECTL_VERSION=<< parameters.kubectl_version >> \
+                .
+      - run: docker login --username "${DOCKER_USER}" --password "${DOCKER_PASS}"
+      - run: docker push sprygroup/cimg-kubectl:<< parameters.cimg_version >>-<< parameters.kubectl_version >>
+
+workflows:
+  commit:
+    jobs:
+      - docker_build:
+          context:
+            - spryci
+          matrix:
+            parameters:
+              kubectl_version: [v1.16.15, v1.17.13, v1.18.10, v1.19.3]
+              cimg_version: ["2020.10"]
+
